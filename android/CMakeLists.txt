@@ -10,7 +10,7 @@ find_package(Vulkan)
 if (Vulkan_FOUND)
   add_compile_definitions(GGML_USE_VULKAN)
   set(LLAMA_EXTRA_LIBS ${LLAMA_EXTRA_LIBS} Vulkan::Vulkan)
-  set(GGML_HEADERS_VULKAN ${LLAMA_CPP_DIR}/ggml/src/ggml-vulkan.h)
+  set(GGML_HEADERS_VULKAN ${LLAMA_CPP_DIR}/ggml/include/ggml-vulkan.h)
   set(GGML_SOURCES_VULKAN ${LLAMA_CPP_DIR}/ggml/src/ggml-vulkan.cpp)
 else()
   message(WARNING "Vulkan not found, building without Vulkan support")
@@ -20,17 +20,22 @@ add_library(maid_llm SHARED
   ${MAID_LLM_SRC_DIR}/maid_llm.cpp
   ${MAID_LLM_SRC_DIR}/build-info.c
   ${LLAMA_CPP_DIR}/ggml/src/ggml.c
+  ${LLAMA_CPP_DIR}/ggml/src/ggml-aarch64.c
   ${LLAMA_CPP_DIR}/ggml/src/ggml-alloc.c
   ${LLAMA_CPP_DIR}/ggml/src/ggml-backend.c
   ${LLAMA_CPP_DIR}/ggml/src/ggml-quants.c
   ${LLAMA_CPP_DIR}/src/llama.cpp
+  ${LLAMA_CPP_DIR}/src/llama-vocab.cpp
+  ${LLAMA_CPP_DIR}/src/llama-grammar.cpp
+  ${LLAMA_CPP_DIR}/src/llama-sampling.cpp
   ${LLAMA_CPP_DIR}/src/unicode.cpp
   ${LLAMA_CPP_DIR}/src/unicode-data.cpp
   ${LLAMA_CPP_DIR}/common/common.cpp
   ${LLAMA_CPP_DIR}/common/common.h
   ${LLAMA_CPP_DIR}/common/sampling.cpp
   ${LLAMA_CPP_DIR}/common/sampling.h
-  ${LLAMA_CPP_DIR}/common/grammar-parser.cpp
+  ${LLAMA_CPP_DIR}/common/log.cpp
+  # ${LLAMA_CPP_DIR}/common/grammar-parser.cpp
   ${LLAMA_CPP_DIR}/common/json-schema-to-grammar.cpp
   ${GGML_SOURCES_VULKAN}
   ${GGML_HEADERS_VULKAN}

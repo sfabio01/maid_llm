@@ -1,5 +1,5 @@
-#include "utils.hpp"
 
+#include "utils.hpp"
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
@@ -64,8 +64,8 @@ EXPORT int maid_llm_prompt(const struct maid_llm_chat* chat, dart_output *output
     for (int i = 0; i < chat->message_count; i++) {
         printf("Message %d: %s\n", i, chat->messages[i].content);
     }
-
-    llama_sampling_context * ctx_sampling = llama_sampling_init(params.sparams);
+    
+    gpt_sampler * ctx_sampling = gpt_sampler_init(model, params.sparams);
 
     std::string buffer = format_chat(model, chat);
 
@@ -90,13 +90,13 @@ EXPORT int maid_llm_prompt(const struct maid_llm_chat* chat, dart_output *output
         input_tokens.erase(input_tokens.begin(), input_tokens.begin() + input_tokens.size() - n_ctx);
 
         // log the truncation
-        log_output(("input_tokens was truncated: " + LOG_TOKENS_TOSTR_PRETTY(ctx, input_tokens)).c_str());
+        log_output("input_tokens was truncated");
     }
     
     // Should not run without any tokens
     if (input_tokens.empty()) {
         input_tokens.push_back(llama_token_bos(model));
-        log_output(("input_tokens was considered empty and bos was added: " + LOG_TOKENS_TOSTR_PRETTY(ctx, input_tokens)).c_str());
+        log_output("input_tokens was considered empty and bos was added");
     }
 
     eval_tokens(ctx, input_tokens, params.n_batch, &n_past);
@@ -107,10 +107,10 @@ EXPORT int maid_llm_prompt(const struct maid_llm_chat* chat, dart_output *output
 
     while (!stop_generation.load()) {
         // sample the most likely token
-        llama_token id = llama_sampling_sample(ctx_sampling, ctx, NULL, 0);
+        llama_token id = gpt_sampler_sample(ctx_sampling, ctx, 0);
 
         // accept the token
-        llama_sampling_accept(ctx_sampling, ctx, id, true);
+        gpt_sampler_accept(ctx_sampling, id, true);
 
         // is it an end of stream?
         if (id == llama_token_eos(model)) {
@@ -137,7 +137,7 @@ EXPORT int maid_llm_prompt(const struct maid_llm_chat* chat, dart_output *output
     log_output(("Prompt stopped in " + get_elapsed_seconds(std::chrono::high_resolution_clock::now() - prompt_start_time)).c_str());
     stop_generation.store(false);
     llama_free(ctx);
-    llama_sampling_free(ctx_sampling);
+    gpt_sampler_free(ctx_sampling);
     output("", true);
     return 0;
 }

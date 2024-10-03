@@ -5,13 +5,14 @@
 #include "llama.h"
 #include "ggml.h"
 #include "common.h"
+#include "sampling.h"
 
 #include <chrono>
 #include <cassert>
 #include <algorithm>
 
-static llama_sampling_params from_c_sampling_params(struct sampling_params c_params) {
-    llama_sampling_params cpp_params;
+static gpt_sampler_params from_c_sampling_params(struct sampling_params c_params) {
+    gpt_sampler_params cpp_params;
 
     cpp_params.n_prev = c_params.n_prev;
     cpp_params.n_probs = c_params.n_probs;
@@ -20,7 +21,7 @@ static llama_sampling_params from_c_sampling_params(struct sampling_params c_par
     cpp_params.top_p = c_params.top_p;
     cpp_params.min_p = c_params.min_p;
     cpp_params.tfs_z = c_params.tfs_z;
-    cpp_params.typical_p = c_params.typical_p;
+    cpp_params.typ_p = c_params.typical_p;
     cpp_params.temp = c_params.temp;
     cpp_params.dynatemp_range = c_params.dynatemp_range;
     cpp_params.dynatemp_exponent = c_params.dynatemp_exponent;
@@ -33,8 +34,8 @@ static llama_sampling_params from_c_sampling_params(struct sampling_params c_par
     cpp_params.mirostat_eta = c_params.mirostat_eta;
     cpp_params.penalize_nl = c_params.penalize_nl;
     cpp_params.grammar = c_params.grammar;
-    cpp_params.cfg_negative_prompt = c_params.cfg_negative_prompt;
-    cpp_params.cfg_scale = c_params.cfg_scale;
+    // cpp_params.cfg_negative_prompt = c_params.cfg_negative_prompt;
+    // cpp_params.cfg_scale = c_params.cfg_scale;
 
     return cpp_params;
 }
@@ -42,11 +43,11 @@ static llama_sampling_params from_c_sampling_params(struct sampling_params c_par
 static gpt_params from_c_params(struct gpt_c_params c_params) {
     gpt_params cpp_params;
 
-    cpp_params.seed                     = c_params.seed;
-    cpp_params.n_threads                = c_params.n_threads;
-    cpp_params.n_threads_draft          = c_params.n_threads_draft;
-    cpp_params.n_threads_batch          = c_params.n_threads_batch;
-    cpp_params.n_threads_batch_draft    = c_params.n_threads_batch_draft;
+    cpp_params.sparams.seed                     = c_params.seed;
+    cpp_params.cpuparams.n_threads      = c_params.n_threads;
+    cpp_params.draft_cpuparams.n_threads    = c_params.n_threads_draft;
+    cpp_params.cpuparams_batch.n_threads    = c_params.n_threads_batch;
+    cpp_params.draft_cpuparams_batch.n_threads  = c_params.n_threads_batch_draft;
     cpp_params.n_predict                = c_params.n_predict;
     cpp_params.n_ctx                    = c_params.n_ctx;
     cpp_params.n_batch                  = c_params.n_batch;
@@ -145,7 +146,7 @@ static gpt_params from_c_params(struct gpt_c_params c_params) {
     cpp_params.logdir                   = c_params.logdir;
     cpp_params.logits_file              = c_params.logits_file;
 
-    cpp_params.lora_base                = c_params.lora_base;
+    cpp_params.lora_adapters.push_back(llama_lora_adapter_info{c_params.lora_base, 1.0f});
 
     cpp_params.ppl_stride               = c_params.ppl_stride;
     cpp_params.ppl_output_type          = c_params.ppl_output_type;
@@ -174,13 +175,13 @@ static gpt_params from_c_params(struct gpt_c_params c_params) {
     cpp_params.cont_batching            = c_params.cont_batching;
 
     cpp_params.input_prefix_bos         = c_params.input_prefix_bos;
-    cpp_params.ignore_eos               = c_params.ignore_eos;
+    cpp_params.sparams.ignore_eos               = c_params.ignore_eos;
     cpp_params.logits_all               = c_params.logits_all;
     cpp_params.use_mmap                 = c_params.use_mmap;
     cpp_params.use_mlock                = c_params.use_mlock;
     cpp_params.verbose_prompt           = c_params.verbose_prompt;
     cpp_params.display_prompt           = c_params.display_prompt;
-    cpp_params.infill                   = c_params.infill;
+    cpp_params.spm_infill                   = c_params.infill;
     cpp_params.dump_kv_cache            = c_params.dump_kv_cache;
     cpp_params.no_kv_offload            = c_params.no_kv_offload;
 
