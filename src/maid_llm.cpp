@@ -107,7 +107,7 @@ EXPORT int maid_llm_prompt(const struct maid_llm_chat* chat, dart_output *output
 
     while (!stop_generation.load()) {
         // sample the most likely token
-        llama_token id = gpt_sampler_sample(ctx_sampling, ctx, 0);
+        llama_token id = gpt_sampler_sample(ctx_sampling, ctx, -1);
 
         // accept the token
         gpt_sampler_accept(ctx_sampling, id, true);
